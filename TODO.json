@@ -124,7 +124,7 @@
       "order": 1,
       "phase": "B",
       "status": "pending",
-      "summary": "JSON Schema for findings plus findings/ directory layout. Fields per the charter: scenario id, what was attempted, what the docs said, what happened, which artifact the defect lives in (documentation/implementation/requirements/scenario/undetermined), evidence, run id; plus lifecycle status. First schema to build because findings exist before mature scenarios do. Schema enforcement is what makes the platform-side pull (T-025) mechanical.",
+      "summary": "JSON Schema for findings plus findings/ directory layout. Fields per the charter: scenario id, what was attempted, what the docs said, what happened, which artifact the defect lives in (documentation/implementation/requirements/scenario/undetermined), evidence, run id; plus lifecycle status. First schema to build because findings exist before mature scenarios do. Schema enforcement is what makes the platform-side pull (T-025) mechanical. Tooling ready: the add-governed-doctype skill (.claude/skills/add-governed-doctype/, SKILL-SPEC-e82da89a38) now encodes the full schema+map+linter+proof loop this item follows; storage direction fixed by ADR 0003.",
       "tags": [
         "findings",
         "schema"
@@ -290,8 +290,8 @@
       "id": "T-019",
       "order": 5,
       "phase": "C",
-      "status": "pending",
-      "summary": "Record the already-settled decisions as ADRs once the enforcement-field practice exists, so each is born either enforced or explicitly advisory: (1) scenario IDs freeze the brainstorm numbering S01-S39, append-only from S40, never renumbered; (2) storage is one directory per scenario under scenarios/ with JSON canonical records; (3) findings live in this repo and are PULLED by the platform repo (no cross-boundary pushes in either direction); (4) canonical data is JSON, human-facing views are generated.",
+      "status": "in-progress",
+      "summary": "Record the already-settled decisions as ADRs once the enforcement-field practice exists, so each is born either enforced or explicitly advisory: (1) scenario IDs freeze the brainstorm numbering S01-S39, append-only from S40, never renumbered; (2) storage is one directory per scenario under scenarios/ with JSON canonical records; (3) findings live in this repo and are PULLED by the platform repo (no cross-boundary pushes in either direction); (4) canonical data is JSON, human-facing views are generated. Partially landed 2026-07-06: three settled-decision ADRs adopted into docs/adr/ (0001 canonical-JSON/jq-edit = ADR-f68da1c75c; 0002 TODO.json ledger = ADR-67f1b0b991; 0003 findings pulled by consumers = ADR-a1e6164091), docs/adr/ bootstrapped with template + index README via the adr skill, each ADR naming its enforcement in Consequences. Remaining: scenario-ID-freeze and per-scenario storage-layout ADRs, pending scenario work.",
       "tags": [
         "adr",
         "findings",
