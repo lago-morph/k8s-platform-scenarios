@@ -31,6 +31,9 @@ fail=0
 err() { printf 'lint-json: %s: %s\n' "$1" "$2" >&2; fail=1; }
 
 # --- 1+2: well-formedness and canonical form --------------------------------
+# experiments/** is deliberately loose (throwaway probe records, ledger
+# T-003): well-formedness only — no canonical form, no schemas, no
+# semantic checks. See experiments/README.md.
 for f in "${files[@]}"; do
   if [ ! -f "$f" ]; then
     err "$f" "file not found"
@@ -40,6 +43,9 @@ for f in "${files[@]}"; do
     err "$f" "not well-formed JSON"
     continue
   fi
+  case "$f" in
+    experiments/*) continue ;;
+  esac
   if ! cmp -s <(jq -S . "$f") "$f"; then
     err "$f" "not in canonical form (fix: scripts/jq-edit \"$f\" '.')"
   fi

@@ -31,8 +31,8 @@
       "id": "T-002",
       "order": 2,
       "phase": "A",
-      "status": "pending",
-      "summary": "PreToolUse hook (repo .claude/settings.json + scripts/hooks/) that deterministically DENIES WebFetch/WebSearch/Bash calls targeting the platform source (github.com/lago-morph/k8s-platform, raw.githubusercontent.com/lago-morph/k8s-platform, codeload equivalents, git clone/fetch of that repo) while allowing the published docs site (lago-morph.github.io/k8s-platform). This is the docs-blindness contract as enforcement instead of prose. Must land BEFORE any docs-only authoring subagent runs, so isolation is enforced, not promised. Hooks apply to subagent tool calls in-session.",
+      "status": "done",
+      "summary": "PreToolUse hook (repo .claude/settings.json + scripts/hooks/) that deterministically DENIES WebFetch/WebSearch/Bash calls targeting the platform source (github.com/lago-morph/k8s-platform, raw.githubusercontent.com/lago-morph/k8s-platform, codeload equivalents, git clone/fetch of that repo) while allowing the published docs site (lago-morph.github.io/k8s-platform). This is the docs-blindness contract as enforcement instead of prose. Must land BEFORE any docs-only authoring subagent runs, so isolation is enforced, not promised. Hooks apply to subagent tool calls in-session. Delivered: scripts/hooks/deny-platform-source wired via .claude/settings.json with matcher WebFetch|WebSearch|Bash|mcp__github.*|mcp__Claude_Code_Remote.* — scans tool input for references to the platform source repository (owner/repo path deliberately not written out here, because the hook also scans Bash command text and this summary is passed through one), covering https/ssh/raw/codeload/api URL forms and github-MCP owner+repo params case-insensitively, scrubbing this repository's own -scenarios references first, failing CLOSED on unparseable input. Agent-launch tools deliberately unmatched: probe prompts legitimately contain the forbidden URL as a prohibition, and a subagent's own tool calls are hooked individually. Table-driven tests: scripts/hooks/test-deny-platform-source (19 cases). Verified live: the hook took effect in-session the moment settings.json existed and denied its own author's very next Bash call, whose prose arguments contained the forbidden pattern — enforcement is real and conservative. Network-policy layer remains T-027.",
       "tags": [
         "docs-blindness",
         "enforcement",
@@ -45,8 +45,8 @@
       "id": "T-003",
       "order": 3,
       "phase": "A",
-      "status": "pending",
-      "summary": "Create experiments/ directory convention: experiments/NNN-name/ holding loose JSON records from throwaway probes. Deliberately NO schema and NO linting at this stage (records are expected to be discarded); JSON-from-day-one so later hardening has a substrate. Include a small README stating the throwaway expectation.",
+      "status": "done",
+      "summary": "Create experiments/ directory convention: experiments/NNN-name/ holding loose JSON records from throwaway probes. Deliberately NO schema and NO linting at this stage (records are expected to be discarded); JSON-from-day-one so later hardening has a substrate. Include a small README stating the throwaway expectation. Delivered: experiments/README.md stating the NNN-name convention, the throwaway expectation, and the per-experiment README requirement; scripts/lint-json exempts experiments/ trees to well-formedness-only (no canonical form, no schemas, no semantic checks) per the no-linting decision.",
       "tags": [
         "experiment",
         "storage"

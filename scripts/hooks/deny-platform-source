@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# deny-platform-source — PreToolUse hook enforcing the docs-blindness contract.
+#
+# The charter's founding rule: scenario authors (human or agent) must never
+# read the platform repository's source. This hook makes that deterministic
+# for tool calls: it scans the tool input for references to the platform
+# source repository (lago-morph/k8s-platform) and denies the call, while the
+# published docs site (lago-morph.github.io/k8s-platform) and this repository
+# (lago-morph/k8s-platform-scenarios) stay allowed.
+#
+# Wired in .claude/settings.json for: WebFetch, WebSearch, Bash, and the
+# github / Claude_Code_Remote MCP tools. Agent-launch tools are deliberately
+# NOT matched: a probe prompt legitimately CONTAINS the forbidden URL as a
+# prohibition ("never fetch ..."), and the subagent's own tool calls are
+# individually hooked anyway.
+#
+# Behavior: unparseable input fails CLOSED (deny) — this is a boundary guard.
+# Tests: scripts/hooks/test-deny-platform-source
+# Ledger: T-002. Strongest-layer alternative (network policy) is T-027.
+set -euo pipefail
+
+deny() {
+  jq -n --arg reason "$1" \
+    '{hookSpecificOutput: {hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: $reason}}'
+  exit 0
+}
+
+reason_text='Docs-blindness contract (charter.md): the platform source repository (lago-morph/k8s-platform) must never be accessed from scenario-authoring sessions. Allowed surface: the published documentation at https://lago-morph.github.io/k8s-platform/ . If the docs lack the information you need, that is a documentation finding to record — not a reason to read source. Enforced by scripts/hooks/deny-platform-source (ledger T-002).'
+
+input=$(cat) || deny "docs-blindness hook: could not read tool input; failing closed. $reason_text"
+
+# Compact re-serialization normalizes spacing so patterns are stable.
+scan=$(printf '%s' "$input" | jq -c '.tool_input // empty' 2>/dev/null) \
+  || deny "docs-blindness hook: tool input was not parseable JSON; failing closed. $reason_text"
+
+# No tool input at all -> nothing that could reference the repo.
+[ -n "$scan" ] || exit 0
+
+# Scrub every reference to THIS repo (…/k8s-platform-scenarios) first, then
+# any remaining …/k8s-platform reference is the platform source. Covers
+# https/ssh/api/raw/codeload URL forms and the github MCP owner/repo params.
+scrubbed=$(printf '%s' "$scan" \
+  | sed -E 's#lago-morph/k8s-platform-scenarios#__ALLOWED_REPO__#gI' \
+  | sed -E 's#"repo":"k8s-platform-scenarios"#__ALLOWED_REPO_PARAM__#gI')
+
+if printf '%s' "$scrubbed" | grep -Eiq 'lago-morph/k8s-platform|"repo":"k8s-platform"'; then
+  deny "$reason_text"
+fi
+
+exit 0

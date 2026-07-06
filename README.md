@@ -36,6 +36,8 @@ repository as issues — this repository never fixes the platform itself.
 | [`TODO.json`](TODO.json) | Cross-session idea ledger: design decisions and pending work with stable IDs, phases, and dependencies, in canonical JSON |
 | [`schemas/`](schemas/) | JSON Schemas for the repository's canonical documents, plus the pattern→schema map the linter uses |
 | [`scripts/`](scripts/) | Deterministic tooling: `lint-json` (canonical-form + schema + semantic checks), `jq-edit` (the sanctioned mutation path), `validate-schema.py` |
+| [`scripts/hooks/`](scripts/hooks/) | PreToolUse hook (with tests) that deterministically enforces the docs-blindness boundary — platform source denied, published docs allowed — wired via [`.claude/settings.json`](.claude/settings.json) |
+| [`experiments/`](experiments/) | Throwaway probe records: loose JSON, well-formedness-only linting, expected to be superseded by real schemas |
 | [`.claude/skills/canonical-json-editing/`](.claude/skills/canonical-json-editing/) | A Claude Code skill defining how canonical JSON documents are edited: jq-only mutation, canonical form, explicit local linting |
 | [`.claude/skills/self-retrospective/`](.claude/skills/self-retrospective/) | A Claude Code skill that harvests session knowledge into a structured retrospective (report, skill specs, ADR drafts, agents-file rules) before it's lost to context truncation |
 | [`.claude/skills/adr/`](.claude/skills/adr/) | A Claude Code skill for authoring and maintaining Architecture Decision Records at `docs/adr/`, with a link checker and canonical template |
