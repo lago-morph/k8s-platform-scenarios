@@ -19,7 +19,7 @@
       "id": "T-001",
       "order": 1,
       "phase": "A",
-      "status": "in-progress",
+      "status": "done",
       "summary": "Create this TODO.json ledger capturing all suggestions from the founding design discussion, with phases, dependencies, and handoff-quality summaries. Done when merged to main.",
       "tags": [
         "process"
@@ -63,7 +63,7 @@
       "id": "T-004",
       "order": 6,
       "phase": "A",
-      "status": "pending",
+      "status": "in-progress",
       "summary": "Launch ONE fresh subagent whose only inputs are: the role, the single scenario bullet, the docs site root URL, and a loose output shape. It attempts a full L1 scenario write (actor, preconditions, prose steps with citations, observable outcome, defect classes) and must record every fact it needed but could not find in the docs, every assumption it was forced to make, and where it blocked. Scenario: S4 (tenant-dev deploys a stateless web application from a git repo via GitOps) - confirmed by the owner 2026-07-06; it is the best-documented path (the sole tutorial plus a how-to), so gaps found there bound everything else. Owner's prediction to test: 5-10 immediate documentation findings from this single write. Deliberately one scenario only: what we learn feeds the docs-side pull process and will change how we do the rest. Sequencing per owner: the jq/canonical-JSON mechanics (T-006, T-007) are reviewed before this probe runs.",
       "tags": [
         "docs-blindness",
