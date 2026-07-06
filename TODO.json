@@ -19,7 +19,7 @@
       "id": "T-001",
       "order": 1,
       "phase": "A",
-      "status": "in-progress",
+      "status": "done",
       "summary": "Create this TODO.json ledger capturing all suggestions from the founding design discussion, with phases, dependencies, and handoff-quality summaries. Done when merged to main.",
       "tags": [
         "process"
@@ -63,8 +63,8 @@
       "id": "T-004",
       "order": 6,
       "phase": "A",
-      "status": "pending",
-      "summary": "Launch ONE fresh subagent whose only inputs are: the role, the single scenario bullet, the docs site root URL, and a loose output shape. It attempts a full L1 scenario write (actor, preconditions, prose steps with citations, observable outcome, defect classes) and must record every fact it needed but could not find in the docs, every assumption it was forced to make, and where it blocked. Scenario: S4 (tenant-dev deploys a stateless web application from a git repo via GitOps) - confirmed by the owner 2026-07-06; it is the best-documented path (the sole tutorial plus a how-to), so gaps found there bound everything else. Owner's prediction to test: 5-10 immediate documentation findings from this single write. Deliberately one scenario only: what we learn feeds the docs-side pull process and will change how we do the rest. Sequencing per owner: the jq/canonical-JSON mechanics (T-006, T-007) are reviewed before this probe runs.",
+      "status": "done",
+      "summary": "Launch ONE fresh subagent whose only inputs are: the role, the single scenario bullet, the docs site root URL, and a loose output shape. It attempts a full L1 scenario write (actor, preconditions, prose steps with citations, observable outcome, defect classes) and must record every fact it needed but could not find in the docs, every assumption it was forced to make, and where it blocked. Scenario: S4 (tenant-dev deploys a stateless web application from a git repo via GitOps) - confirmed by the owner 2026-07-06; it is the best-documented path (the sole tutorial plus a how-to), so gaps found there bound everything else. Owner's prediction to test: 5-10 immediate documentation findings from this single write. Deliberately one scenario only: what we learn feeds the docs-side pull process and will change how we do the rest. Sequencing per owner: the jq/canonical-JSON mechanics (T-006, T-007) are reviewed before this probe runs. Delivered 2026-07-06: probe ran docs-blind behind the T-002 hook (self-test 19/19 at launch); output saved verbatim in experiments/001-s4-depth-probe/probe-output.json (agent final message arrived one byte short of well-formed; the single terminating brace was restored, disclosed in the experiment README). Result: 15 candidate documentation findings (12 missing facts + 1 blocked + 2 platform-fact assumptions) vs the predicted 5-10, on the best-documented path. Sole hard block: tenant verification access (no shipped human kubectl path; access guide is contract-stability). Triage deliberately not started - that is T-005 with the owner.",
       "tags": [
         "docs-blindness",
         "experiment",
@@ -467,6 +467,21 @@
         "process"
       ],
       "title": "Retrospective habit at session boundaries"
+    },
+    {
+      "depends_on": [
+        "T-007"
+      ],
+      "id": "T-031",
+      "order": 8,
+      "phase": "A",
+      "status": "pending",
+      "summary": "scripts/validate-schema.py — and therefore scripts/lint-json and scripts/jq-edit, which invoke it — requires the python3 jsonschema package, which is NOT present in fresh remote-session containers. The first JSON mutation of a new session fails with validate-schema exit 2 (schema validation cannot run) until pip install jsonschema is run by hand; the canonical-json-editing skill documents the dependency but nothing installs it, so every fresh session hits this wall before it can touch any canonical document. Make the dependency deterministically present: a SessionStart hook or a repo setup/bootstrap script that installs it (candidate: the session-start-hook skill), and/or a pinned requirements file the environment provisions. Discovered live while executing T-004 in a fresh container. Local/session counterpart to T-013 (CI installs its own deps).",
+      "tags": [
+        "linting",
+        "tooling"
+      ],
+      "title": "Ensure jsonschema is installed so the JSON linter runs in fresh sessions"
     }
   ],
   "updated": "2026-07-06"
