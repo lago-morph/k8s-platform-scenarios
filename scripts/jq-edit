@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# jq-edit — the sanctioned way to mutate a canonical JSON document.
+#
+# Applies a jq filter to FILE, rewrites it atomically in canonical form
+# (jq -S: sorted keys, 2-space indent, trailing newline), then lints it.
+# The mutation is all-or-nothing: a failing filter or failing lint leaves
+# a clear error, never a half-written file.
+#
+# Usage:
+#   scripts/jq-edit FILE FILTER [JQ_ARGS...]
+#
+# Examples:
+#   scripts/jq-edit TODO.json '(.items[] | select(.id=="T-006") | .status) = "done"'
+#   scripts/jq-edit TODO.json '.items += [$item]' --argjson item '{"id":"T-031", ...}'
+#   scripts/jq-edit findings/F-001.json '.'          # canonicalize only
+#
+# Exit status: 0 = edited and clean, 2 = usage/filter error, 1 = lint failed.
+set -euo pipefail
+
+if [ "$#" -lt 2 ]; then
+  echo "usage: scripts/jq-edit FILE FILTER [JQ_ARGS...]" >&2
+  exit 2
+fi
+
+file=$1
+filter=$2
+shift 2
+
+if [ ! -f "$file" ]; then
+  echo "jq-edit: $file: file not found" >&2
+  exit 2
+fi
+
+root=$(git rev-parse --show-toplevel)
+
+tmp=$(mktemp "$file.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+
+if ! jq -S "$@" "$filter" "$file" > "$tmp"; then
+  echo "jq-edit: $file: jq filter failed; file unchanged" >&2
+  exit 2
+fi
+
+mv "$tmp" "$file"
+trap - EXIT
+
+"$root/scripts/lint-json" "$file"

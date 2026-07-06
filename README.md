@@ -33,6 +33,10 @@ repository as issues — this repository never fixes the platform itself.
 |---|---|
 | [`charter.md`](charter.md) | The founding charter: mission, docs-blindness contract, maturity pipeline, execution contract, findings format, and governance |
 | [`scenario-brainstorm.md`](scenario-brainstorm.md) | The seed L0 catalog: 39 scenarios ranked into five waves by when the platform can execute them |
+| [`TODO.json`](TODO.json) | Cross-session idea ledger: design decisions and pending work with stable IDs, phases, and dependencies, in canonical JSON |
+| [`schemas/`](schemas/) | JSON Schemas for the repository's canonical documents, plus the pattern→schema map the linter uses |
+| [`scripts/`](scripts/) | Deterministic tooling: `lint-json` (canonical-form + schema + semantic checks), `jq-edit` (the sanctioned mutation path), `validate-schema.py` |
+| [`.claude/skills/canonical-json-editing/`](.claude/skills/canonical-json-editing/) | A Claude Code skill defining how canonical JSON documents are edited: jq-only mutation, canonical form, explicit local linting |
 | [`.claude/skills/self-retrospective/`](.claude/skills/self-retrospective/) | A Claude Code skill that harvests session knowledge into a structured retrospective (report, skill specs, ADR drafts, agents-file rules) before it's lost to context truncation |
 | [`.claude/skills/adr/`](.claude/skills/adr/) | A Claude Code skill for authoring and maintaining Architecture Decision Records at `docs/adr/`, with a link checker and canonical template |
 | [`.claude/skills/human-scoped-deliverables/`](.claude/skills/human-scoped-deliverables/) | A Claude Code skill that calibrates human-facing deliverables (summaries, overviews, explainers) for this repository's human reader |

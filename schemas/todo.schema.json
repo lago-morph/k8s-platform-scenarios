@@ -1,0 +1,133 @@
+{
+  "$id": "https://github.com/lago-morph/k8s-platform-scenarios/schemas/todo.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Schema for TODO.json, the cross-session idea ledger. Semantic rules the schema cannot express (unique ids, depends_on referential integrity, items sorted by id, tags/depends_on sorted alphabetically, status within conventions.status_values) are enforced by scripts/lint-json.",
+  "properties": {
+    "conventions": {
+      "additionalProperties": false,
+      "properties": {
+        "editing": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "ids": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "ordering": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "purpose": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "status_values": {
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "editing",
+        "ids",
+        "ordering",
+        "purpose",
+        "status_values"
+      ],
+      "type": "object"
+    },
+    "description": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "depends_on": {
+            "items": {
+              "pattern": "^T-[0-9]{3}$",
+              "type": "string"
+            },
+            "type": "array",
+            "uniqueItems": true
+          },
+          "id": {
+            "pattern": "^T-[0-9]{3}$",
+            "type": "string"
+          },
+          "order": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "phase": {
+            "enum": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "in-progress",
+              "done",
+              "dropped",
+              "deferred"
+            ],
+            "type": "string"
+          },
+          "summary": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "minItems": 1,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "title": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "depends_on",
+          "id",
+          "order",
+          "phase",
+          "status",
+          "summary",
+          "tags",
+          "title"
+        ],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    },
+    "updated": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conventions",
+    "description",
+    "items",
+    "updated"
+  ],
+  "type": "object"
+}
