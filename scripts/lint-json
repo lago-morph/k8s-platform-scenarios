@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# lint-json — deterministic linter for this repo's canonical JSON documents.
+#
+# Checks, per file:
+#   1. well-formed JSON
+#   2. canonical form: `jq -S .` must round-trip byte-identical
+#      (sorted keys, 2-space indent, trailing newline)
+#   3. JSON Schema validation, per the pattern->schema entries in schemas/map.json
+#      (requires python3 + jsonschema; see scripts/validate-schema.py)
+#   4. document-specific semantic checks that JSON Schema cannot express
+#      (referential integrity, array ordering)
+#
+# Usage:
+#   scripts/lint-json            lint every tracked + untracked-unignored *.json
+#   scripts/lint-json FILE...    lint only the named files
+#
+# Exit status: 0 = clean, 1 = violations found, 2 = tooling error.
+# Conventions are documented in .claude/skills/canonical-json-editing/SKILL.md
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+cd "$root"
+
+if [ "$#" -gt 0 ]; then
+  files=("$@")
+else
+  mapfile -t files < <(git ls-files --cached --others --exclude-standard -- '*.json')
+fi
+
+fail=0
+err() { printf 'lint-json: %s: %s\n' "$1" "$2" >&2; fail=1; }
+
+# --- 1+2: well-formedness and canonical form --------------------------------
+# experiments/** is deliberately loose (throwaway probe records, ledger
+# T-003): well-formedness only — no canonical form, no schemas, no
+# semantic checks. See experiments/README.md.
+for f in "${files[@]}"; do
+  if [ ! -f "$f" ]; then
+    err "$f" "file not found"
+    continue
+  fi
+  if ! jq empty "$f" >/dev/null 2>&1; then
+    err "$f" "not well-formed JSON"
+    continue
+  fi
+  case "$f" in
+    experiments/*) continue ;;
+  esac
+  if ! cmp -s <(jq -S . "$f") "$f"; then
+    err "$f" "not in canonical form (fix: scripts/jq-edit \"$f\" '.')"
+  fi
+done
+
+# --- 3: JSON Schema validation ----------------------------------------------
+if [ -f schemas/map.json ] && jq empty schemas/map.json >/dev/null 2>&1; then
+  while IFS=$'\t' read -r pattern schema; do
+    for f in "${files[@]}"; do
+      [ -f "$f" ] || continue
+      jq empty "$f" >/dev/null 2>&1 || continue
+      # shellcheck disable=SC2254  # $pattern is deliberately a glob
+      case "$f" in
+        $pattern)
+          if ! python3 scripts/validate-schema.py "$schema" "$f"; then
+            err "$f" "schema validation failed against $schema"
+          fi
+          ;;
+      esac
+    done
+  done < <(jq -r '.[] | [.pattern, .schema] | @tsv' schemas/map.json)
+fi
+
+# --- 4: document-specific semantic checks ------------------------------------
+# TODO.json — referential integrity and ordering rules the schema can't state.
+# As more governed document types appear, migrate these into per-document
+# check definitions rather than growing this section indefinitely.
+check_todo() {
+  local t=$1
+  jq -e '([.items[].id] | length) == ([.items[].id] | unique | length)' "$t" >/dev/null \
+    || err "$t" "duplicate item ids"
+  jq -e '[.items[].id] as $ids | [.items[].depends_on[]] | all(. as $d | $ids | index($d) != null)' "$t" >/dev/null \
+    || err "$t" "depends_on references a nonexistent item id"
+  jq -e '[.items[].id] == ([.items[].id] | sort)' "$t" >/dev/null \
+    || err "$t" "items not sorted by id"
+  jq -e '[.items[] | .tags == (.tags | sort)] | all' "$t" >/dev/null \
+    || err "$t" "item tags not sorted alphabetically"
+  jq -e '[.items[] | .depends_on == (.depends_on | sort)] | all' "$t" >/dev/null \
+    || err "$t" "item depends_on not sorted alphabetically"
+  jq -e '.conventions.status_values as $s | [.items[].status] | all(. as $x | $s | index($x) != null)' "$t" >/dev/null \
+    || err "$t" "item status outside conventions.status_values"
+}
+for f in "${files[@]}"; do
+  if [ "$f" = "TODO.json" ] && [ -f "$f" ] && jq empty "$f" >/dev/null 2>&1; then
+    check_todo "$f"
+  fi
+done
+
+if [ "$fail" -ne 0 ]; then
+  echo "lint-json: FAIL" >&2
+  exit 1
+fi
+printf 'lint-json: OK (%d file(s))\n' "${#files[@]}"

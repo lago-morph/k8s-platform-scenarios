@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# test-deny-platform-source — table-driven tests for the docs-blindness hook.
+# Run directly; exits non-zero if any case fails. CI wiring is ledger T-013.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+hook=scripts/hooks/deny-platform-source
+pass=0
+fail=0
+
+check() { # check EXPECT(deny|allow) LABEL PAYLOAD
+  local want=$1 label=$2 payload=$3 out got
+  out=$(printf '%s' "$payload" | "$hook")
+  if printf '%s' "$out" | grep -Eq '"permissionDecision": ?"deny"'; then
+    got=deny
+  else
+    got=allow
+  fi
+  if [ "$got" = "$want" ]; then
+    pass=$((pass + 1))
+  else
+    fail=$((fail + 1))
+    printf 'FAIL: %s — expected %s, got %s\n' "$label" "$want" "$got" >&2
+  fi
+}
+
+# --- must DENY: platform source in any form ---------------------------------
+check deny "WebFetch of source repo page" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://github.com/lago-morph/k8s-platform","prompt":"x"}}'
+check deny "WebFetch of raw file" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://raw.githubusercontent.com/lago-morph/k8s-platform/main/README.md","prompt":"x"}}'
+check deny "Bash git clone https" \
+  '{"tool_name":"Bash","tool_input":{"command":"git clone https://github.com/lago-morph/k8s-platform.git /tmp/peek"}}'
+check deny "Bash git clone ssh form" \
+  '{"tool_name":"Bash","tool_input":{"command":"git clone git@github.com:lago-morph/k8s-platform.git"}}'
+check deny "Bash curl codeload tarball" \
+  '{"tool_name":"Bash","tool_input":{"command":"curl -L https://codeload.github.com/lago-morph/k8s-platform/tar.gz/refs/heads/main -o p.tgz"}}'
+check deny "Bash curl api.github.com contents" \
+  '{"tool_name":"Bash","tool_input":{"command":"curl https://api.github.com/repos/lago-morph/k8s-platform/contents/"}}'
+check deny "github MCP repo param" \
+  '{"tool_name":"mcp__github__get_file_contents","tool_input":{"owner":"lago-morph","repo":"k8s-platform","path":"/"}}'
+check deny "add_repo of platform source" \
+  '{"tool_name":"mcp__Claude_Code_Remote__add_repo","tool_input":{"owner":"lago-morph","repo":"k8s-platform"}}'
+check deny "mixed: scenarios repo AND source repo in one command" \
+  '{"tool_name":"Bash","tool_input":{"command":"git clone https://github.com/lago-morph/k8s-platform-scenarios && git clone https://github.com/lago-morph/k8s-platform"}}'
+check deny "case variation" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://GitHub.com/Lago-Morph/K8S-Platform/tree/main/terraform","prompt":"x"}}'
+check deny "malformed stdin fails closed" 'this is not json'
+
+# --- must ALLOW: docs site, this repo, unrelated targets ---------------------
+check allow "WebFetch of published docs site" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://lago-morph.github.io/k8s-platform/explanation/platform-topology/","prompt":"x"}}'
+check allow "WebFetch docs how-to page" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://lago-morph.github.io/k8s-platform/how-to/deploy-an-application/","prompt":"x"}}'
+check allow "Bash git push of THIS repo" \
+  '{"tool_name":"Bash","tool_input":{"command":"git push https://github.com/lago-morph/k8s-platform-scenarios main"}}'
+check allow "github MCP against THIS repo" \
+  '{"tool_name":"mcp__github__create_pull_request","tool_input":{"owner":"lago-morph","repo":"k8s-platform-scenarios","title":"t","head":"h","base":"main"}}'
+check allow "unrelated repo" \
+  '{"tool_name":"WebFetch","tool_input":{"url":"https://github.com/lago-morph/software-factory","prompt":"x"}}'
+check allow "WebSearch mentioning k8s-platform bare (no owner path)" \
+  '{"tool_name":"WebSearch","tool_input":{"query":"k8s-platform crossplane hub and spoke"}}'
+check allow "empty tool_input" \
+  '{"tool_name":"Bash","tool_input":{}}'
+check allow "no tool_input field" \
+  '{"tool_name":"Bash"}'
+
+printf 'test-deny-platform-source: %d passed, %d failed\n' "$pass" "$fail"
+[ "$fail" -eq 0 ]

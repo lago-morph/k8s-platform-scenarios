@@ -1,0 +1,6 @@
+[
+  {
+    "pattern": "TODO.json",
+    "schema": "schemas/todo.schema.json"
+  }
+]
