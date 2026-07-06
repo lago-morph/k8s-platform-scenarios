@@ -1,0 +1,471 @@
+{
+  "conventions": {
+    "editing": "This file is canonical JSON. After initial creation, mutate it with jq (or equivalent structure-preserving tooling), not a text editor. Canonical form: `jq -S .` with 2-space indent; re-running that command must be a no-op.",
+    "ids": "Items are T-NNN, zero-padded, append-only. Never renumber, never reuse. Dropped items keep their ID with status=dropped and a note.",
+    "ordering": "phase (A/B/C/D) is the coarse logical order; order is the sequence within a phase. Both are proposals to be re-sorted by the repo owner, not commitments.",
+    "purpose": "Cross-session idea ledger. Captures decisions and suggestions from design discussions so they survive context loss. An item here is preserved, not necessarily approved.",
+    "status_values": [
+      "pending",
+      "in-progress",
+      "done",
+      "dropped",
+      "deferred"
+    ]
+  },
+  "description": "Todo ledger for k8s-platform-scenarios, seeded from the 2026-07-06 design discussion on scenario storage, deterministic enforcement, docs-blind authoring, and the first experiment.",
+  "items": [
+    {
+      "depends_on": [],
+      "id": "T-001",
+      "order": 1,
+      "phase": "A",
+      "status": "in-progress",
+      "summary": "Create this TODO.json ledger capturing all suggestions from the founding design discussion, with phases, dependencies, and handoff-quality summaries. Done when merged to main.",
+      "tags": [
+        "process"
+      ],
+      "title": "Bootstrap the cross-session todo ledger"
+    },
+    {
+      "depends_on": [],
+      "id": "T-002",
+      "order": 2,
+      "phase": "A",
+      "status": "pending",
+      "summary": "PreToolUse hook (repo .claude/settings.json + scripts/hooks/) that deterministically DENIES WebFetch/WebSearch/Bash calls targeting the platform source (github.com/lago-morph/k8s-platform, raw.githubusercontent.com/lago-morph/k8s-platform, codeload equivalents, git clone/fetch of that repo) while allowing the published docs site (lago-morph.github.io/k8s-platform). This is the docs-blindness contract as enforcement instead of prose. Must land BEFORE any docs-only authoring subagent runs, so isolation is enforced, not promised. Hooks apply to subagent tool calls in-session.",
+      "tags": [
+        "hook",
+        "enforcement",
+        "docs-blindness"
+      ],
+      "title": "Docs-blindness boundary hook"
+    },
+    {
+      "depends_on": [],
+      "id": "T-003",
+      "order": 3,
+      "phase": "A",
+      "status": "pending",
+      "summary": "Create experiments/ directory convention: experiments/NNN-name/ holding loose JSON records from throwaway probes. Deliberately NO schema and NO linting at this stage (records are expected to be discarded); JSON-from-day-one so later hardening has a substrate. Include a small README stating the throwaway expectation.",
+      "tags": [
+        "storage",
+        "experiment"
+      ],
+      "title": "experiments/ storage for throwaway probe records"
+    },
+    {
+      "depends_on": [
+        "T-002",
+        "T-003"
+      ],
+      "id": "T-004",
+      "order": 4,
+      "phase": "A",
+      "status": "pending",
+      "summary": "Launch ONE fresh subagent whose only inputs are: the role, the single scenario bullet, the docs site root URL, and a loose output shape. It attempts a full L1 scenario write (actor, preconditions, prose steps with citations, observable outcome, defect classes) and must record every fact it needed but could not find in the docs, every assumption it was forced to make, and where it blocked. Recommended scenario: S4 (tenant-dev deploys stateless app via GitOps - the best-documented path, so gaps found there bound everything else); alternative S2 (owner verifies a build - probes whether an owner-facing surface exists at all). Owner's prediction to test: 5-10 immediate documentation findings from this single write. Deliberately one scenario only: what we learn feeds the docs-side pull process and will change how we do the rest.",
+      "tags": [
+        "experiment",
+        "docs-blindness",
+        "scenario"
+      ],
+      "title": "Depth probe: docs-only L1 write of ONE scenario"
+    },
+    {
+      "depends_on": [
+        "T-004"
+      ],
+      "id": "T-005",
+      "order": 5,
+      "phase": "A",
+      "status": "pending",
+      "summary": "Read the probe output with the owner; extract candidate documentation findings into loose JSON records (in experiments/, since findings/ schema does not exist yet). Compare count against the 5-10 prediction. These records seed the findings schema design (T-008) with real shapes instead of speculation.",
+      "tags": [
+        "experiment",
+        "findings"
+      ],
+      "title": "Triage depth-probe output into draft findings"
+    },
+    {
+      "depends_on": [
+        "T-004"
+      ],
+      "id": "T-006",
+      "order": 1,
+      "phase": "B",
+      "status": "pending",
+      "summary": "Write a Claude Code skill defining how agents access and modify schema'd, linted documents in this repo: mutate JSON only via jq or equivalent (never text-edit), run the local lint steps explicitly before committing (do not wait for CI to find errors), sort sub-elements alphabetically where order is not semantic, store all JSON pretty-printed in the canonical form so diffs are logical and useful. The skill makes the conventions executable knowledge for every future session.",
+      "tags": [
+        "skill",
+        "linting",
+        "convention"
+      ],
+      "title": "Skill: editing schema'd + linted documents"
+    },
+    {
+      "depends_on": [],
+      "id": "T-007",
+      "order": 2,
+      "phase": "B",
+      "status": "pending",
+      "summary": "Define the canonical JSON form (jq -S, 2-space indent, trailing newline) and provide scripts/lint-json that checks well-formedness plus idempotence of canonicalization for every tracked .json file. This is the first deterministic linter; everything later hangs checks off the same pattern.",
+      "tags": [
+        "linting",
+        "convention"
+      ],
+      "title": "Canonical JSON formatting rule + linter"
+    },
+    {
+      "depends_on": [
+        "T-005"
+      ],
+      "id": "T-008",
+      "order": 3,
+      "phase": "B",
+      "status": "pending",
+      "summary": "JSON Schema for findings plus findings/ directory layout. Fields per the charter: scenario id, what was attempted, what the docs said, what happened, which artifact the defect lives in (documentation/implementation/requirements/scenario/undetermined), evidence, run id; plus lifecycle status. First schema to build because findings exist before mature scenarios do. Schema enforcement is what makes the platform-side pull (T-025) mechanical.",
+      "tags": [
+        "schema",
+        "findings"
+      ],
+      "title": "Findings schema and storage"
+    },
+    {
+      "depends_on": [
+        "T-005"
+      ],
+      "id": "T-009",
+      "order": 4,
+      "phase": "B",
+      "status": "pending",
+      "summary": "JSON Schema for scenario records at L0 and L1, designed so each level's schema strictly extends the previous level's (L2+ schemas added when needed). Includes the status vocabulary as an enum: draft / ready / blocked-on-docs / blocked-on-platform / deferred / retired, machine-countable from the records. Informed by what the depth probe actually produced, not written speculatively.",
+      "tags": [
+        "schema",
+        "scenario"
+      ],
+      "title": "Scenario schema for L0/L1 with status vocabulary"
+    },
+    {
+      "depends_on": [
+        "T-005"
+      ],
+      "id": "T-010",
+      "order": 5,
+      "phase": "B",
+      "status": "pending",
+      "summary": "Central assumptions registry (assumptions/ as JSON records): statement, type (tool-knowledge / platform-fact / judgment), scope (global | role | surface | explicit scenario list), status (unresolved / resolved-by-citation / converted-to-finding / invalidated), citations. Scenarios reference assumptions by ID instead of restating them, so fundamentally-identical assumptions cannot diverge across scenarios. Known limit, accepted: semantic dedup (same assumption, different words) is not deterministically lintable and stays a review activity - keep the registry small enough to eyeball. The lintable part: shape, referential integrity, and the L1-to-L2 gate (no unresolved platform-fact assumptions in scope).",
+      "tags": [
+        "schema",
+        "assumptions"
+      ],
+      "title": "Central assumptions registry with scoping"
+    },
+    {
+      "depends_on": [
+        "T-008",
+        "T-009"
+      ],
+      "id": "T-011",
+      "order": 6,
+      "phase": "B",
+      "status": "pending",
+      "summary": "Citation object format {url, anchor, exact_quote} where the exact quote is the durable key (numeric section refs break on insertion; heading anchors break on retitle; a verbatim quote is re-findable and checkable). Provide a checker script that fetches each cited URL and verifies the quote still appears - deterministic, CI-able, and quote drift is itself a signal: the documentation changed underneath a scenario, distinguishing docs regression from platform regression.",
+      "tags": [
+        "schema",
+        "linting",
+        "citations"
+      ],
+      "title": "Quote-anchored citation format + drift checker"
+    },
+    {
+      "depends_on": [
+        "T-007"
+      ],
+      "id": "T-012",
+      "order": 7,
+      "phase": "B",
+      "status": "pending",
+      "summary": "pre-commit configuration running the local linters (canonical JSON form, schema validation, referential integrity; citation checker where network-tolerant) so errors surface at commit time, not CI time. Complements, never replaces, the CI backstop.",
+      "tags": [
+        "linting",
+        "enforcement"
+      ],
+      "title": "pre-commit hooks for local lint feedback"
+    },
+    {
+      "depends_on": [
+        "T-007"
+      ],
+      "id": "T-013",
+      "order": 8,
+      "phase": "B",
+      "status": "pending",
+      "summary": "GitHub Actions workflow running every linter on every PR. This is the unskippable deterministic backstop that does not depend on any agent's obedience or any human's vigilance; local hooks and Claude Code hooks are conveniences layered above it.",
+      "tags": [
+        "ci",
+        "enforcement"
+      ],
+      "title": "CI lint gate on every PR"
+    },
+    {
+      "depends_on": [
+        "T-006",
+        "T-009"
+      ],
+      "id": "T-014",
+      "order": 9,
+      "phase": "B",
+      "status": "pending",
+      "summary": "PreToolUse hook denying the Edit/Write tools on canonical JSON paths (scenarios/, findings/, assumptions/), forcing mutations through Bash+jq per the editing skill. Deliberately deferred until schemas are stable enough that the friction pays for itself; before that it just slows the experiments.",
+      "tags": [
+        "hook",
+        "enforcement"
+      ],
+      "title": "jq-only mutation enforcement hook"
+    },
+    {
+      "depends_on": [],
+      "id": "T-015",
+      "order": 1,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Adopt the adr skill's output at docs/adr/ with one addition: every ADR carries an enforcement field naming the lint rule / hook / CI check that operationalizes it, or explicitly 'advisory'. A meta-linter fails CI if an ADR references a check that does not exist. The advisory count is reported as a tracked metric (visible debt), exactly like the blocked-on-docs count. Rationale: an ADR nobody checks is worse than no ADR - it manufactures the illusion of governance.",
+      "tags": [
+        "adr",
+        "enforcement"
+      ],
+      "title": "ADR practice with named enforcement per decision"
+    },
+    {
+      "depends_on": [
+        "T-015"
+      ],
+      "id": "T-016",
+      "order": 2,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Convention plus implementation: every linter failure message names the ADR it enforces and one line of why. Violation time is the only moment an ADR reliably gets read, so that is where the reference lives - not in prose nobody revisits.",
+      "tags": [
+        "adr",
+        "linting"
+      ],
+      "title": "Linter errors cite the ADR they enforce"
+    },
+    {
+      "depends_on": [
+        "T-015"
+      ],
+      "id": "T-017",
+      "order": 3,
+      "phase": "C",
+      "status": "pending",
+      "summary": "SessionStart hook that deterministically injects the ADR index (titles + one-liners) and the top open TODO items into every session's context. Prominence stops depending on an agent choosing to read docs/adr/ or TODO.json.",
+      "tags": [
+        "hook",
+        "adr",
+        "process"
+      ],
+      "title": "SessionStart injection of ADR index + open todos"
+    },
+    {
+      "depends_on": [
+        "T-002"
+      ],
+      "id": "T-018",
+      "order": 4,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Write CLAUDE.md explicitly as documentation OF the enforcement layer - what the hooks block and why, where the linters live, what the canonical formats are - so a denied tool call or failed lint is explicable. It is never itself the enforcement; the repo owner's experience is that prose rules alone are not worth the electrons.",
+      "tags": [
+        "docs",
+        "convention"
+      ],
+      "title": "CLAUDE.md as documentation of checks, not rules"
+    },
+    {
+      "depends_on": [
+        "T-015"
+      ],
+      "id": "T-019",
+      "order": 5,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Record the already-settled decisions as ADRs once the enforcement-field practice exists, so each is born either enforced or explicitly advisory: (1) scenario IDs freeze the brainstorm numbering S01-S39, append-only from S40, never renumbered; (2) storage is one directory per scenario under scenarios/ with JSON canonical records; (3) findings live in this repo and are PULLED by the platform repo (no cross-boundary pushes in either direction); (4) canonical data is JSON, human-facing views are generated.",
+      "tags": [
+        "adr",
+        "scenario",
+        "findings"
+      ],
+      "title": "ADRs for settled decisions (IDs, layout, pull model, JSON-canonical)"
+    },
+    {
+      "depends_on": [
+        "T-009"
+      ],
+      "id": "T-020",
+      "order": 6,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Maturity level becomes computed, not claimed: the linter derives the effective level from record content plus checklist attestation fields (for non-machine-derivable facts like 'cleanup verified re-entrant', recorded with who/when), and a record claiming a level above its computed level fails. Advancement L(n) to L(n+1) is then a diff that makes the linter agree, including the gate: no unresolved platform-fact assumptions in scope at L1-to-L2.",
+      "tags": [
+        "schema",
+        "linting",
+        "scenario"
+      ],
+      "title": "Computed maturity levels with attestation checklists"
+    },
+    {
+      "depends_on": [
+        "T-009"
+      ],
+      "id": "T-021",
+      "order": 7,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Script that deterministically reports the blocked-on-docs count (and per-status counts generally) from scenario records. The charter designates this count as THE documentation quality metric; it should be one command, not a judgment.",
+      "tags": [
+        "metrics",
+        "scenario"
+      ],
+      "title": "blocked-on-docs metric as a one-command report"
+    },
+    {
+      "depends_on": [
+        "T-008",
+        "T-009"
+      ],
+      "id": "T-022",
+      "order": 8,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Reclassify scenario S1 (full platform rebuild) to L0 blocked-on-docs in the catalog: the charter's parenthetical 'already at L4 - this is the existing clean-build loop' asserts maturity from implementation knowledge, but no rebuild documentation, owner-facing status story, or remediation guidance exists on the docs site, so by the corpus's own definitions it cannot be past L0. Record the charter's claim itself as a finding once findings/ exists - the founding documents are not exempt from the blindness discipline.",
+      "tags": [
+        "scenario",
+        "findings",
+        "docs-blindness"
+      ],
+      "title": "Demote S1 to L0 blocked-on-docs; file the charter-claim finding"
+    },
+    {
+      "depends_on": [
+        "T-009"
+      ],
+      "id": "T-023",
+      "order": 9,
+      "phase": "C",
+      "status": "pending",
+      "summary": "Mark author-role scenarios S19 and S20 (blog demo scripts) as deferred in the catalog with the reason recorded: they require a hybrid docs+blog context the owner does not want to design yet. Wave-1 work proceeds with owner, tenant, and adversary roles only.",
+      "tags": [
+        "scenario"
+      ],
+      "title": "Defer author scenarios S19/S20 with recorded reason"
+    },
+    {
+      "depends_on": [
+        "T-004",
+        "T-008"
+      ],
+      "id": "T-024",
+      "order": 1,
+      "phase": "D",
+      "status": "deferred",
+      "summary": "Breadth sweep across remaining wave-1 scenarios: one fresh docs-only subagent PER scenario (per-scenario agents keep isolation pure - one scenario's docs reading must not color another's assessment), each returning a small JSON record: 3-4 sentence scenario sketch, citations found, facts needed but not found, blocked or not. Aggregating the missing-facts fields is the documentation gap map. Deferred in favor of the single depth probe (T-004); revisit after the probe's findings have fed the docs-side pull process.",
+      "tags": [
+        "experiment",
+        "docs-blindness",
+        "scenario"
+      ],
+      "title": "Breadth sweep: per-scenario docs-only gap map"
+    },
+    {
+      "depends_on": [
+        "T-008"
+      ],
+      "id": "T-025",
+      "order": 2,
+      "phase": "D",
+      "status": "pending",
+      "summary": "Document the stable pull contract the platform repo can rely on to extract findings from this repo and materialize them as issues (and potentially feed its documentation-generation process): file layout, schema version, status semantics, finding ID as the idempotency key. The pull implementation and the issue mapping live entirely on the platform side; finding records here never need back-writes. Open question captured from discussion: how findings integrate into the docs-generation workflow on that side - expect discoveries there to change things here.",
+      "tags": [
+        "findings",
+        "contract"
+      ],
+      "title": "Findings pull contract for the platform repo"
+    },
+    {
+      "depends_on": [
+        "T-011"
+      ],
+      "id": "T-026",
+      "order": 3,
+      "phase": "D",
+      "status": "pending",
+      "summary": "File a finding/request to the platform repo: documentation headings need explicit stable anchor IDs so citations survive retitles. Cheap on the docs-source side; until then the quote-anchored citation format (T-011) carries durability.",
+      "tags": [
+        "findings",
+        "citations"
+      ],
+      "title": "Request stable heading anchors in platform docs"
+    },
+    {
+      "depends_on": [
+        "T-002"
+      ],
+      "id": "T-027",
+      "order": 4,
+      "phase": "D",
+      "status": "pending",
+      "summary": "For dedicated scenario-authoring sessions, configure the remote-environment network policy to allowlist only the published docs domain. This is the strongest form of the blindness boundary (the hook layer can be evaded by indirection; a network policy cannot). Environment-level configuration, not repo-level.",
+      "tags": [
+        "enforcement",
+        "docs-blindness"
+      ],
+      "title": "Network-policy allowlist for authoring sessions"
+    },
+    {
+      "depends_on": [
+        "T-008",
+        "T-009"
+      ],
+      "id": "T-028",
+      "order": 5,
+      "phase": "D",
+      "status": "pending",
+      "summary": "Generator that renders human-facing views (catalog overview, findings report, gap map, per-status counts) as Markdown from the canonical JSON. Humans read renders; machines own the records. Never hand-edit a rendered view.",
+      "tags": [
+        "tooling",
+        "reporting"
+      ],
+      "title": "Human-facing report generator from canonical JSON"
+    },
+    {
+      "depends_on": [
+        "T-006",
+        "T-009",
+        "T-010"
+      ],
+      "id": "T-029",
+      "order": 6,
+      "phase": "D",
+      "status": "pending",
+      "summary": "Author the remaining wave-1 scenarios to L1 using docs-only subagents behind the hardened schemas, templates, and assumption registry - only after the depth probe's lessons (and any docs-side changes they trigger) are absorbed.",
+      "tags": [
+        "scenario",
+        "docs-blindness"
+      ],
+      "title": "Batch wave-1 L1 authoring behind hardened substrate"
+    },
+    {
+      "depends_on": [],
+      "id": "T-030",
+      "order": 7,
+      "phase": "D",
+      "status": "pending",
+      "summary": "Run the self-retrospective skill at meaningful session ends so process lessons are harvested before context loss; first one after the depth-probe experiment. The retrospective's proposed rules and ADR drafts feed back into this ledger.",
+      "tags": [
+        "process"
+      ],
+      "title": "Retrospective habit at session boundaries"
+    }
+  ],
+  "updated": "2026-07-06"
+}
