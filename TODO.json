@@ -467,6 +467,21 @@
         "process"
       ],
       "title": "Retrospective habit at session boundaries"
+    },
+    {
+      "depends_on": [
+        "T-007"
+      ],
+      "id": "T-031",
+      "order": 8,
+      "phase": "A",
+      "status": "pending",
+      "summary": "scripts/validate-schema.py — and therefore scripts/lint-json and scripts/jq-edit, which invoke it — requires the python3 jsonschema package, which is NOT present in fresh remote-session containers. The first JSON mutation of a new session fails with validate-schema exit 2 (schema validation cannot run) until pip install jsonschema is run by hand; the canonical-json-editing skill documents the dependency but nothing installs it, so every fresh session hits this wall before it can touch any canonical document. Make the dependency deterministically present: a SessionStart hook or a repo setup/bootstrap script that installs it (candidate: the session-start-hook skill), and/or a pinned requirements file the environment provisions. Discovered live while executing T-004 in a fresh container. Local/session counterpart to T-013 (CI installs its own deps).",
+      "tags": [
+        "linting",
+        "tooling"
+      ],
+      "title": "Ensure jsonschema is installed so the JSON linter runs in fresh sessions"
     }
   ],
   "updated": "2026-07-06"
